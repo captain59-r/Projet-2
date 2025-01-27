@@ -4,11 +4,71 @@ document.addEventListener('DOMContentLoaded', () => {
     const favoriteList = document.querySelector('#favorite-list');
     const searchField = document.querySelector('#search-field');
 
+    const dropZone = document.querySelector('#drop-zone');
+    const recipeImageInput = document.querySelector('#recipe-image');
+    const uploadButton = document.querySelector('#upload-button'); 
+    let uploadedImageURL = '';
+
     let recipes = JSON.parse(localStorage.getItem('recipes')) || [];
     let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
     console.log('Loaded recipes from localStorage:', recipes);
     console.log('Loaded favorites from localStorage:', favorites);
+
+    function isMobileDevice() {
+        return /Mobi|Android/i.test(navigator.userAgent);
+    }
+
+    if (isMobileDevice()) {
+        dropZone.style.display = 'none'; 
+        uploadButton.style.display = 'block'; 
+    } else {
+        uploadButton.style.display = 'none';
+        dropZone.style.display = 'flex';
+    }
+
+    dropZone.addEventListener('click', () => recipeImageInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+
+        const file = e.dataTransfer.files[0];
+        handleImageUpload(file);
+    });
+
+    uploadButton.addEventListener('click', () => recipeImageInput.click());
+
+    recipeImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        handleImageUpload(file);
+    });
+
+    function handleImageUpload(file) {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImageURL = e.target.result;
+                if (isMobileDevice()) {
+                    uploadButton.textContent = 'Image téléchargée !'; 
+                } else {
+                    dropZone.innerHTML = `<img src="${uploadedImageURL}" alt="Image de la recette" style="max-width: 100%; height: auto;">`;
+                }
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert('Veuillez sélectionner un fichier image valide.');
+        }
+    }
 
     function loadRecipes(filter = '') {
         const filteredRecipes = recipes.filter(recipe =>
@@ -18,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         recipeList.innerHTML = '';
 
         if (filteredRecipes.length === 0) {
-            recipeList.innerHTML = '<p>Aucune recettes trouvés.</p>';
+            recipeList.innerHTML = '<p>Aucune recettes trouvées.</p>';
             return;
         }
 
@@ -54,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             recipeList.appendChild(recipeCard);
         });
 
-        attachEventListeners(); 
+        attachEventListeners();
     }
 
     function loadFavorites() {
@@ -93,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
 
         const title = document.querySelector('#recipe-title').value.trim();
-        const image = document.querySelector('#recipe-image').value.trim() || '../images/recette.jpg';
+        const image = uploadedImageURL || '../images/recette.jpg'; 
         const servings = parseInt(document.querySelector('#recipe-servings').value.trim(), 10);
 
         const ingredients = Array.from(document.querySelectorAll('#ingredients-list .d-flex')).map(row => ({
@@ -112,11 +172,15 @@ document.addEventListener('DOMContentLoaded', () => {
         recipes.push(newRecipe);
         localStorage.setItem('recipes', JSON.stringify(recipes));
 
-        console.log('Nouvelle recette ajouté:', newRecipe);
+        console.log('Nouvelle recette ajoutée:', newRecipe);
 
         addRecipeForm.reset();
-        loadRecipes(); 
-        alert('Nouvelle recette ajouté !');
+        uploadedImageURL = ''; 
+        if (!isMobileDevice()) {
+            dropZone.innerHTML = '<p>Glissez une image ici ou cliquez pour en sélectionner une</p>';
+        }
+        loadRecipes();
+        alert('Nouvelle recette ajoutée !');
     }
 
     searchField.addEventListener('input', () => {
@@ -152,28 +216,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (favoriteIndex === -1) {
             favorites.push(recipe);
-            alert('Recette ajouté aux favorites !');
+            alert('Recette ajoutée aux favoris !');
         } else {
             favorites.splice(favoriteIndex, 1);
-            alert('Recette ajouté aux favorites.');
+            alert('Recette retirée des favoris.');
         }
 
         localStorage.setItem('favorites', JSON.stringify(favorites));
-        loadFavorites(); 
+        loadFavorites();
     }
 
     function removeRecipe(index) {
         recipes.splice(index, 1);
         localStorage.setItem('recipes', JSON.stringify(recipes));
         loadRecipes();
-        alert('Recette supprimé.');
+        alert('Recette supprimée.');
     }
 
     function removeFavorite(index) {
         favorites.splice(index, 1);
         localStorage.setItem('favorites', JSON.stringify(favorites));
         loadFavorites();
-        alert('Retiré des favoris.');
+        alert('Retirée des favoris.');
     }
 
     function viewDetails(index) {
