@@ -1,29 +1,20 @@
-(function () {
+const darkModeToggle = document.getElementById("dark-mode-toggle");
 
-    const root = document.documentElement;
-  
-    function toggleDarkMode() {
-      const currentTheme = root.getAttribute("data-theme");
-      const newTheme = currentTheme === "dark" ? "light" : "dark";
-      root.setAttribute("data-theme", newTheme);
-      localStorage.setItem("theme", newTheme);
+const isDarkMode = localStorage.getItem("dark-mode") === "enabled";
+
+if (isDarkMode) {
+    document.body.classList.add("dark-mode");
+    darkModeToggle.textContent = "Désactiver le Mode Sombre";
+}
+
+darkModeToggle.addEventListener("click", () => {
+    const isCurrentlyDark = document.body.classList.toggle("dark-mode");
+
+    if (isCurrentlyDark) {
+        darkModeToggle.textContent = "Désactiver le Mode Sombre";
+        localStorage.setItem("dark-mode", "enabled");
+    } else {
+        darkModeToggle.textContent = "Activer le Mode Sombre";
+        localStorage.setItem("dark-mode", "disabled");
     }
-  
-    function init() {
-      const storedPreference = localStorage.getItem("theme");
-      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const theme = storedPreference || (systemPrefersDark ? "dark" : "light");
-      root.setAttribute("data-theme", theme);
-    }
-  
-    init();
-  
-    document.addEventListener("DOMContentLoaded", function () {
-      const togglers = document.querySelectorAll("[data-theme-toggler]");
-      togglers.forEach((toggler) => {
-        toggler.addEventListener("click", toggleDarkMode);
-      });
-    });
-  
-  })();
-  
+});
